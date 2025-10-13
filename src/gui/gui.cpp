@@ -1,7 +1,7 @@
 #include "gui.h"
-
+#include <iostream>
+using namespace std;
 Gui Gui::instance;
-
 Gui::Gui() { winSize = sf::Vector2u(0, 0); }
 
 void Gui::setWindowSize(sf::Vector2u s) {

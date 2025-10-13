@@ -15,10 +15,11 @@
 #include "map/enums.h"
 #include "map/map.h"
 #include "states/racepause.h"
+#include "states/agent.h"
 #include "states/statebase.h"
 
 class StateRace : public State {
-   private:
+  private:
     static const sf::Time TIME_BETWEEN_ITEM_CHECKS;
     sf::Time nextItemCheck;
 
@@ -39,7 +40,8 @@ class StateRace : public State {
    public:
     static sf::Time currentTime;
     static CCOption ccOption;
-
+    Agent* agent = new Agent();
+    // Agent& getAgent() { return agent; }
     StateRace(Game& game, const DriverPtr& _player, const DriverArray& _drivers,
               RaceRankingArray& _positions)
         : State(game),
@@ -54,7 +56,7 @@ class StateRace : public State {
     bool fixedUpdate(const sf::Time& deltaTime) override;
     void draw(sf::RenderTarget& window) override;
 
-    void init();
+  void init();
 
     inline std::string string() const override { return "Race"; }
 };

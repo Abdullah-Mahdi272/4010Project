@@ -63,6 +63,13 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         driver->update(deltaTime);
         Audio::updateEngine(i, driver->position, driver->height,
                             driver->speedForward, driver->speedTurn);
+        
+        if (driver == player) {
+            std::cout<<driver->position.x<<","<<driver->position.y<<std::endl;
+            agent->doNothing(1);
+            agent->updatePosition(driver->position.x, driver->position.y);
+            
+        }
     }
     // check if AI should use its items
     if (currentTime > nextItemCheck) {

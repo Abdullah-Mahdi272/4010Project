@@ -1,5 +1,6 @@
 #include "driver.h"
-
+#include <iostream>
+using namespace std;
 // needed to overcome circular dependency errors
 #include "ai/gradientdescent.h"
 #include "entities/collisionhashmap.h"
@@ -720,6 +721,10 @@ void Driver::update(const sf::Time &deltaTime) {
     }
 
     MapLand land = Map::getLand(position);
+    // if(controlType == DriverControlType::PLAYER){
+    //     cout<<"pos: "<<position.x<<","<<position.y<<endl;
+    // }
+    // cout<<"Driver pos: "<<position.x<<endl;
     if (land == MapLand::SLOW && (~state & (int)DriverState::STAR) &&
         (~state & (int)DriverState::SPEED_UP)) {
         if (speedForward > vehicle->slowLandMaxLinearSpeed) {

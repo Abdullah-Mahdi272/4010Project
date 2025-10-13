@@ -1,7 +1,7 @@
 #pragma once
-
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <array>  // for std::array
 
 namespace Color {
 static const sf::Color Default(81, 142, 225);
