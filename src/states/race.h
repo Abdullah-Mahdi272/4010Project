@@ -31,6 +31,7 @@ class StateRace : public State {
     bool pushedPauseThisFrame = false;
     bool raceFinished = false;
     bool driftPressed = false;
+    bool splitsInitialized = false;
     
     // if player is in last place and all 7 AI finish, give some seconds to
     // the player and after that finish the game
@@ -40,8 +41,8 @@ class StateRace : public State {
    public:
     static sf::Time currentTime;
     static CCOption ccOption;
-    Agent* agent = new Agent();
-    // Agent& getAgent() { return agent; }
+    Agent* agent = nullptr;
+    
     StateRace(Game& game, const DriverPtr& _player, const DriverArray& _drivers,
               RaceRankingArray& _positions)
         : State(game),
@@ -56,7 +57,7 @@ class StateRace : public State {
     bool fixedUpdate(const sf::Time& deltaTime) override;
     void draw(sf::RenderTarget& window) override;
 
-  void init();
+    void init();
 
     inline std::string string() const override { return "Race"; }
 };

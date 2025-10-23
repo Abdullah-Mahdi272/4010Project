@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <iostream>
 using namespace std;
+
 Gui Gui::instance;
 Gui::Gui() { winSize = sf::Vector2u(0, 0); }
 
@@ -10,6 +11,7 @@ void Gui::setWindowSize(sf::Vector2u s) {
     instance.itemInd.setPosition(s, instance.timer.getItemPos());
     instance.others.setWindowSize(s);
     instance.effects.setWindowSize(s);
+    instance.splitTimer.setWindowSize(s);
 }
 
 void Gui::setPowerUp(PowerUps power) { instance.itemInd.setItem(power); }
@@ -47,6 +49,7 @@ void Gui::draw(sf::RenderTarget &window, const sf::Color &timerColor) {
     instance.timer.draw(window, timerColor);
     instance.itemInd.draw(window);
     instance.others.draw(window);
+    instance.splitTimer.draw(window);
 }
 
 void Gui::endRace() { instance.others.setRanking(instance.others.rank, true); }
@@ -56,6 +59,19 @@ void Gui::reset(bool rankReset) {
     instance.others.reset(rankReset);
     instance.itemInd.reset();
     instance.effects.reset();
+    instance.splitTimer.reset();
 }
 
 void Gui::stopEffects() { instance.effects.stop(); }
+
+void Gui::initializeSplits(int maxGradient) {
+    instance.splitTimer.initializeCheckpoints(maxGradient);
+}
+
+void Gui::updateSplits(const sf::Time &currentRaceTime, int currentGradient, int currentLap, const sf::Time &deltaTime) {
+    instance.splitTimer.update(currentRaceTime, currentGradient, currentLap, deltaTime);
+}
+
+void Gui::resetSplits() {
+    instance.splitTimer.reset();
+}

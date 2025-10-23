@@ -36,12 +36,12 @@ class StateRaceDemo : public State {
     std::string showMessage;
 
     // race stuff
+    // Correct (Fixed) Order:
+    RaceRankingArray positions; // MUST be declared first
     DriverArray drivers;
     DriverArray miniDrivers;
-    RaceRankingArray positions;
-
-    // camera stuff
     DriverPtr pseudoPlayer;
+
     unsigned int currentTarget;
     float targetDirection;
     sf::Time nextSwitchTime, nextQPTime;

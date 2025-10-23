@@ -12,6 +12,7 @@ void StateRace::init() {
     StateRace::currentTime = sf::Time::Zero;
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
+    splitsInitialized = false;
 }
 
 void StateRace::handleEvent(const sf::Event& event) {
@@ -56,6 +57,15 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
     currentTime += deltaTime;
     pushedPauseThisFrame = false;
 
+    // Initialize splits after first update when gradient data is available
+    if (!splitsInitialized && player->getLastGradient() != -1) {
+        // Get max gradient from AI system
+        int maxGradient = AIGradientDescent::MAX_POSITION_MATRIX;
+        Gui::initializeSplits(maxGradient);
+        splitsInitialized = true;
+        std::cout << "Splits initialized with max gradient: " << maxGradient << std::endl;
+    }
+
     // Map object updates
     for (unsigned int i = 0; i < drivers.size(); i++) {
         DriverPtr& driver = drivers[i];
@@ -65,12 +75,20 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                             driver->speedForward, driver->speedTurn);
         
         if (driver == player) {
-            std::cout<<driver->position.x<<","<<driver->position.y<<std::endl;
-            agent->doNothing(1);
-            agent->updatePosition(driver->position.x, driver->position.y);
+            // Update split timer for player
+            if (splitsInitialized) {
+                Gui::updateSplits(currentTime, driver->getLastGradient(), 
+                                 driver->getLaps(), deltaTime);
+            }
             
+            // Agent code (if needed)
+            if (agent != nullptr) {
+                agent->doNothing(1);
+                agent->updatePosition(driver->position.x, driver->position.y);
+            }
         }
     }
+    
     // check if AI should use its items
     if (currentTime > nextItemCheck) {
         nextItemCheck = currentTime + TIME_BETWEEN_ITEM_CHECKS;

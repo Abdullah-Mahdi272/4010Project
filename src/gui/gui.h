@@ -10,6 +10,7 @@ class Gui;
 #include "gui/itemIndicator.h"
 #include "gui/others.h"
 #include "gui/timer.h"
+#include "gui/splittimer.h"
 
 class Gui {
    private:
@@ -21,6 +22,7 @@ class Gui {
     ItemIndicator itemInd;
     Others others;
     Effects effects;
+    SplitTimer splitTimer;
 
     sf::Vector2u winSize;
 
@@ -45,4 +47,9 @@ class Gui {
     static void endRace();
     static void reset(bool rankReset = true);
     static void stopEffects();
+    
+    // Split timer methods
+    static void initializeSplits(int maxGradient);
+    static void updateSplits(const sf::Time &currentRaceTime, int currentGradient, int currentLap, const sf::Time &deltaTime);
+    static void resetSplits();
 };
