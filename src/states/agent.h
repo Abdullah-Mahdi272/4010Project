@@ -1,18 +1,20 @@
 #pragma once
 #include <iostream>
-
+#include <cmath>
 class Agent {
 public:
     Agent();
-    // void doNothing(int x){std::cout<<x<<std::endl;};
-    void updatePosition(float x,float y);
+    void updatePosition(float x, float y);
     void updateSpeed(float forward, float turn);
-    float getSpeedForward() const;
-    float getSpeedTurn() const;
+    void updateAngle(float angle);
+    float getSpeedForward();
+    float getSpeedTurn();
+    float getAngle();
 
 private:
     float positionX;
     float positionY;
     float speedForward;
     float speedTurn;
+    float angle;
 };

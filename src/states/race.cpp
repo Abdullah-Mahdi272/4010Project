@@ -83,9 +83,9 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
 
             // Agent code
             if (agent != nullptr) {
-                // agent->doNothing(1);
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
+                agent->updateAngle(driver->posAngle);
             }
         }
     }
