@@ -1,22 +1,19 @@
+#include "states/agent.h"
 
-#include "agent.h"
-
-Agent::Agent(){positionX = 0; positionY = 0;}
+Agent::Agent()
+    : positionX(0.0f), positionY(0.0f),
+      speedForward(0.0f), speedTurn(0.0f) {}
 
 void Agent::updatePosition(float x, float y) {
-	positionX = x;
-	positionY = y;
-    std::cout << "Agent position updated to: (" << positionX << ", " << positionY << ")\n" << x << "," << y <<std::endl;
+    positionX = x;
+    positionY = y;
 }
 
-// void Agent::updateRanking(int r) {
-// 	ranking = r;
-// }
+void Agent::updateSpeed(float forward, float turn) {
+	speedForward = forward;
+    speedTurn = turn;
+	// std::cout<< "Agent Speed Update - Forward: " << forward << ", Turn: " << turn << std::endl;
+}
 
-// int Agent::getPositionX() const {
-// 	return positionX;
-// }
-
-// int Agent::getPositionY() const {
-// 	return positionY;
-// }
+float Agent::getSpeedForward() const { return speedForward; }
+float Agent::getSpeedTurn() const { return speedTurn; }
