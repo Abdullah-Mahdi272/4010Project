@@ -63,7 +63,6 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         int maxGradient = AIGradientDescent::MAX_POSITION_MATRIX;
         Gui::initializeSplits(maxGradient);
         splitsInitialized = true;
-        // std::cout << "Splits initialized with max gradient: " << maxGradient << std::endl;
     }
 
     // Map object updates
@@ -75,13 +74,21 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                             driver->speedForward, driver->speedTurn);
         
         if (driver == player) {
-            // Update split timer for player
+            // Update split timer for player WITH REAL DATA
             if (splitsInitialized) {
-                Gui::updateSplits(currentTime, driver->getLastGradient(), 
-                                  driver->getLaps(), deltaTime);
+                Gui::updateSplits(
+                    currentTime,
+                    driver->getLastGradient(),
+                    driver->getLaps(),
+                    deltaTime,
+                    driver->position,
+                    driver->speedForward,
+                    driver->speedTurn,
+                    driver->posAngle
+                );
             }
 
-            // Agent code
+            // Agent code (if you still need it)
             if (agent != nullptr) {
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
@@ -160,13 +167,6 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
               });
     // find current player and update GUI
     for (unsigned int i = 0; i < positions.size(); i++) {
-#ifdef DEBUG_POSITION_RANKING
-        // // Debug: display ranking with laps and gradient score
-        // std::cout << i + 1 << ": "
-        //           << DRIVER_DISPLAY_NAMES[(int)positions[i]->getPj()] << " con "
-        //           << positions[i]->getLaps() << " y "
-        //           << positions[i]->getLastGradient() << std::endl;
-#endif
         positions[i]->rank = i;
         if (positions[i] == player.get()) {
             Gui::setRanking(i + 1);
@@ -174,7 +174,6 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
     }
 
     // UI updates
-
     Lakitu::update(deltaTime);
     bool hasChanged = FloorObject::applyAllChanges();
     if (hasChanged) {

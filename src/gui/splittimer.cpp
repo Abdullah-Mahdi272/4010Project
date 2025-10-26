@@ -1,6 +1,7 @@
 #include "splittimer.h"
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 const sf::Time SplitTimer::SPLIT_DISPLAY_DURATION = sf::seconds(3.0f);
 
@@ -20,6 +21,12 @@ SplitTimer::SplitTimer() {
     displayingSplitIndex = -1;
     deltaIsPositive = false;
     splitDisplayTimer = sf::Time::Zero;
+    
+    // NEW: Initialize state data
+    currentSpeed = 0.0f;
+    currentTurnSpeed = 0.0f;
+    currentAngle = 0.0f;
+    currentPosition = sf::Vector2f(0.0f, 0.0f);
     
     // Initialize arrays
     for (int i = 0; i < NUM_SPLITS; i++) {
@@ -123,12 +130,10 @@ void SplitTimer::initializeCheckpoints(int maxGradient) {
     maxGradientValue = maxGradient;
     
     // Calculate equal sections - gradient DECREASES as you progress
-    // So checkpoint 1 should be at 7/8 of max, checkpoint 2 at 6/8, etc.
     float sectionLength = static_cast<float>(maxGradient) / static_cast<float>(NUM_SPLITS);
     
     // Set checkpoint gradient values (HIGH to LOW)
     for (int i = 0; i < NUM_SPLITS; i++) {
-        // Checkpoint i triggers when gradient drops BELOW this value
         checkpointGradients[i] = static_cast<int>(maxGradient - (sectionLength * (i + 1)));
     }
     
@@ -141,21 +146,21 @@ void SplitTimer::initializeCheckpoints(int maxGradient) {
     }
 }
 
-void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum, const sf::Time& deltaTime) {
+void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum, 
+                        const sf::Time& deltaTime, const sf::Vector2f& position, 
+                        float speed, float turnSpeed, float angle) {
     if (!checkpointsInitialized || !texturesLoaded) {
         return;
     }
     
-    // Debug output every 2 seconds
-    static sf::Time debugTimer = sf::Time::Zero;
-    debugTimer += deltaTime;
-    if (debugTimer.asSeconds() > 2.0f) {
-        std::cout << "SplitTimer: CurrentGradient=" << currentGradient 
-                  << ", NextSplitIndex=" << nextSplitIndex 
-                  << ", NextCheckpoint=" << (nextSplitIndex < NUM_SPLITS ? checkpointGradients[nextSplitIndex] : -1)
-                  << ", Lap=" << currentLapNum << std::endl;
-        debugTimer = sf::Time::Zero;
-    }
+    // NEW: Store current state data
+    currentPosition = position;
+    currentSpeed = speed;
+    currentTurnSpeed = turnSpeed;
+    currentAngle = angle;
+    
+    // NEW: Output state data for RL system (every frame)
+    outputStateData(currentRaceTime, currentGradient, currentLapNum);
     
     // Check if we've moved to a new lap
     if (currentLapNum != currentLap && currentLapNum > currentLap) {
@@ -164,8 +169,6 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
     
     // Check if we've crossed the next split
     if (nextSplitIndex < NUM_SPLITS && !splitsCrossed[nextSplitIndex]) {
-        // The gradient DECREASES as you progress through the lap
-        // Check if current gradient is LESS THAN OR EQUAL to checkpoint gradient
         if (currentGradient <= checkpointGradients[nextSplitIndex]) {
             // Record the split time
             currentLapSplits[nextSplitIndex] = currentRaceTime;
@@ -193,6 +196,23 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
     
     // Update display timers
     updateDisplay(deltaTime);
+}
+
+void SplitTimer::outputStateData(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum) {
+    // Output in structured format for RL system to parse
+    // Format: RL_STATE|time|gradient|lap|split|posX|posY|speed|turnSpeed|angle
+    std::cout << "RL_STATE|"
+              << std::fixed << std::setprecision(3)
+              << currentRaceTime.asSeconds() << "|"
+              << currentGradient << "|"
+              << currentLapNum << "|"
+              << nextSplitIndex << "|"
+              << currentPosition.x << "|"
+              << currentPosition.y << "|"
+              << currentSpeed << "|"
+              << currentTurnSpeed << "|"
+              << currentAngle
+              << std::endl;
 }
 
 void SplitTimer::resetForNewLap(int lapNumber) {
@@ -240,6 +260,12 @@ void SplitTimer::reset() {
     splitDisplayTimer = sf::Time::Zero;
     displayingSplitIndex = -1;
     
+    // Reset state data
+    currentSpeed = 0.0f;
+    currentTurnSpeed = 0.0f;
+    currentAngle = 0.0f;
+    currentPosition = sf::Vector2f(0.0f, 0.0f);
+    
     std::cout << "SplitTimer fully reset." << std::endl;
 }
 
@@ -277,15 +303,12 @@ void SplitTimer::setWindowSize(sf::Vector2u s) {
                             scaleFactor.y * windowScaleFactor);
     
     // Position split display in top-left area (below timer)
-    // Make it more visible - move it right and down a bit
     splitDisplayPosition = sf::Vector2f(s.x * 0.05f, s.y * 0.15f);
     
     // Position delta display right below split display
     deltaDisplayPosition = sf::Vector2f(s.x * 0.05f, s.y * 0.22f);
     
     std::cout << "SplitTimer window size set: " << s.x << "x" << s.y << std::endl;
-    std::cout << "  Split display position: " << splitDisplayPosition.x << ", " << splitDisplayPosition.y << std::endl;
-    std::cout << "  Window scale factor: " << windowScaleFactor << std::endl;
 }
 
 void SplitTimer::displaySplit(int splitIndex, const sf::Time& splitTime) {
@@ -354,7 +377,6 @@ void SplitTimer::updateDisplay(const sf::Time& deltaTime) {
     if (showingSplit) {
         splitDisplayTimer -= deltaTime;
         if (splitDisplayTimer <= sf::Time::Zero) {
-            std::cout << "Split display timer expired, hiding split." << std::endl;
             showingSplit = false;
             showingDelta = false;
         }
@@ -380,8 +402,6 @@ void SplitTimer::formatTimeToSprites(const sf::Time& time,
     if (seconds > 59) seconds = 59;
     if (millis > 99) millis = 99;
     
-    std::cout << "  Formatting time: " << minutes << "'" << seconds << "''" << millis << std::endl;
-    
     digitSprites[0].setTexture(digits[minutes / 10]);
     digitSprites[1].setTexture(digits[minutes % 10]);
     digitSprites[2].setTexture(digits[seconds / 10]);
@@ -399,8 +419,6 @@ void SplitTimer::draw(sf::RenderTarget& window) {
         return;
     }
     
-    std::cout << "Drawing split timer (timer: " << splitDisplayTimer.asSeconds() << "s remaining)" << std::endl;
-    
     // Calculate fade effect in last 0.5 seconds
     sf::Color color = sf::Color::White;
     if (splitDisplayTimer.asSeconds() < 0.5f) {
@@ -414,8 +432,6 @@ void SplitTimer::draw(sf::RenderTarget& window) {
     int xSizeSprite = static_cast<int>(splitDisplayDigits[0].getGlobalBounds().width);
     float xPos = splitDisplayPosition.x;
     float yPos = splitDisplayPosition.y;
-    
-    std::cout << "  Drawing at position: " << xPos << ", " << yPos << " (alpha: " << (int)color.a << ")" << std::endl;
     
     // Draw "MM'SS''mm" format
     int digitIndex = 0;

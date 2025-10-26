@@ -33,6 +33,12 @@ private:
     // Current lap number
     int currentLap;
     
+    // NEW: Real-time state data for RL
+    float currentSpeed;
+    float currentTurnSpeed;
+    float currentAngle;
+    sf::Vector2f currentPosition;
+    
     // Visual components
     sf::Texture digits[10];
     sf::Texture separators[3]; // ' '' and :
@@ -65,7 +71,10 @@ public:
     void initializeCheckpoints(int maxGradient);
     
     // Check if player has crossed a split and record time
-    void update(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum, const sf::Time& deltaTime);
+    // NEW: Now also takes position, speed, and angle
+    void update(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum, 
+                const sf::Time& deltaTime, const sf::Vector2f& position, 
+                float speed, float turnSpeed, float angle);
     
     // Reset for new lap
     void resetForNewLap(int lapNumber);
@@ -104,4 +113,7 @@ private:
     // Format time to digit sprites
     void formatTimeToSprites(const sf::Time& time, std::array<sf::Sprite, 6>& digitSprites, 
                             std::array<sf::Sprite, 2>& separatorSprites);
+    
+    // NEW: Output state data for RL system
+    void outputStateData(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum);
 };

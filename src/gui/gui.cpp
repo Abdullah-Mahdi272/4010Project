@@ -41,7 +41,7 @@ void Gui::update(const sf::Time &deltaTime) {
     instance.timer.update(deltaTime);
     instance.itemInd.update(deltaTime);
     instance.others.update(deltaTime);
-    instance.effects.update(deltaTime);
+instance.effects.update(deltaTime);
 }
 
 void Gui::draw(sf::RenderTarget &window, const sf::Color &timerColor) {
@@ -68,8 +68,12 @@ void Gui::initializeSplits(int maxGradient) {
     instance.splitTimer.initializeCheckpoints(maxGradient);
 }
 
-void Gui::updateSplits(const sf::Time &currentRaceTime, int currentGradient, int currentLap, const sf::Time &deltaTime) {
-    instance.splitTimer.update(currentRaceTime, currentGradient, currentLap, deltaTime);
+void Gui::updateSplits(const sf::Time &currentRaceTime, int currentGradient, 
+                      int currentLap, const sf::Time &deltaTime,
+                      const sf::Vector2f &position, float speed, 
+                      float turnSpeed, float angle) {
+    instance.splitTimer.update(currentRaceTime, currentGradient, currentLap, 
+                              deltaTime, position, speed, turnSpeed, angle);
 }
 
 void Gui::resetSplits() {
