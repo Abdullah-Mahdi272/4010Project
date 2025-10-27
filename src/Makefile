@@ -14,7 +14,7 @@ OBJ := $(patsubst %.cpp, $(BINDIR)/%.o, $(SRC))
 DEP := $(OBJ:.o=.d)
 
 CPPFLAGS := 
-CXXFLAGS := -std=c++11  -Wall -W
+CXXFLAGS := -std=c++14  -Wall -W
 LDFLAGS := 
 LDLIBS := 
 

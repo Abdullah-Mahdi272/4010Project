@@ -20,6 +20,11 @@ void StateRace::init() {
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
     splitsInitialized = false;
+
+    //random
+    //false = player control
+    random_enabled = true;
+    randomAI = std::make_unique<RandomAgent>();
     
     // ensure we have an Agent instance for this race
     if (agent == nullptr) {
@@ -89,6 +94,62 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         driver->update(deltaTime);
         Audio::updateEngine(i, driver->position, driver->height,
                             driver->speedForward, driver->speedTurn);
+                            
+
+        //random agent
+        //if random is enabled and if this driver is the player
+        if (random_enabled && driver == player) {
+            //update randomAI for this frame, get new random action
+            randomAI->update(deltaTime.asSeconds());
+            //get the random action
+            const auto& d = randomAI->action();
+
+    
+        //if plauer os on the ground
+        if (driver->height == 0.0f) {
+            //if accelerate
+            if (d.accel) {
+                //accelerate smoothly until max speed
+                float f = driver->vehicle->motorAcceleration * 0.5f;
+                driver->speedForward = std::min(driver->speedForward + f * deltaTime.asSeconds(), driver->vehicle->maxNormalLinearSpeed);
+            }
+            //braking
+            if (d.brake) {
+                //accelerate backwards 
+                float b = driver->vehicle->motorAcceleration * 0.6f;
+                driver->speedForward = std::max(driver->speedForward - b * deltaTime.asSeconds(), 0.0f);
+            }
+        }
+
+        //turning
+        //if turning left
+        if (d.left && !d.right) {
+            driver->speedTurn = -driver->vehicle->maxTurningAngularSpeed * 0.5f;
+        } 
+        //if turning right
+        else if (d.right && !d.left) {
+            driver->speedTurn =  driver->vehicle->maxTurningAngularSpeed * 0.5f;
+        } 
+        //if not turning (going back to moving straight)
+        else {
+            //reduce turning
+            driver->speedTurn /= 1.5f;
+        }
+
+        //drift (jump)
+        //if driver is able to drive and is on the ground
+        if (d.drift && driver->canDrive() && driver->height == 0.0f) {
+            driver->shortJump();
+        }
+
+        //if random agent decides to use item AND if player is able to drive AND if player has item
+        if (d.item && driver->canDrive() && driver->getPowerUp() != PowerUps::NONE) {
+            //uses item to front (false would be backwards)
+            Item::useItem(driver, positions, true);
+        }
+
+        //end of randdom agent
+}
         
         if (driver == player) {
             // Update split timer for player WITH REAL DATA
@@ -248,6 +309,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
 
     return true;
 }
+
 
 void StateRace::draw(sf::RenderTarget& window) {
     // scale

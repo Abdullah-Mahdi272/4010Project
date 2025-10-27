@@ -18,6 +18,8 @@
 #include "states/agent.h"
 #include "states/statebase.h"
 
+#include "random_agent.h"
+
 class StateRace : public State {
   private:
     static const sf::Time TIME_BETWEEN_ITEM_CHECKS;
@@ -32,6 +34,10 @@ class StateRace : public State {
     bool raceFinished = false;
     bool driftPressed = false;
     bool splitsInitialized = false;
+
+    //random 
+    bool random_enabled = false;
+    std::unique_ptr<RandomAgent> randomAI;
     
     // if player is in last place and all 7 AI finish, give some seconds to
     // the player and after that finish the game
