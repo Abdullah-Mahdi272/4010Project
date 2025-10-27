@@ -41,7 +41,7 @@ void Gui::update(const sf::Time &deltaTime) {
     instance.timer.update(deltaTime);
     instance.itemInd.update(deltaTime);
     instance.others.update(deltaTime);
-instance.effects.update(deltaTime);
+    instance.effects.update(deltaTime);
 }
 
 void Gui::draw(sf::RenderTarget &window, const sf::Color &timerColor) {

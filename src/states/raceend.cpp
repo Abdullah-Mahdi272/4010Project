@@ -1,27 +1,23 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
-
 #include "entities/lakitu.h"
 #include "map/map.h"
 #include "raceend.h"
-
-const sf::Time StateRaceEnd::ANIMATION_TURN_TIME = sf::seconds(3.5f);
-const sf::Time StateRaceEnd::ANIMATION_ZOOM_OUT_TIME = sf::seconds(6.0f);
-const sf::Time StateRaceEnd::ANIMATION_TOTAL_TIME = sf::seconds(10.0f);
-
+const sf::Time StateRaceEnd::ANIMATION_TURN_TIME = sf::Time::Zero;
+const sf::Time StateRaceEnd::ANIMATION_ZOOM_OUT_TIME = sf::Time::Zero;
+const sf::Time StateRaceEnd::ANIMATION_TOTAL_TIME = sf::Time::Zero; // TRUE INSTANT RESTART - NO DELAY
 void StateRaceEnd::init() {
     timeExecutingState = sf::Time::Zero;
     pseudoPlayer = DriverPtr(new Driver(
         "assets/drivers/invisible.png", sf::Vector2f(0.0f, 0.0f), 0.0f,
         MAP_TILES_WIDTH, MAP_TILES_HEIGHT, DriverControlType::DISABLED,
         VehicleProperties::GODMODE, MenuPlayer(1)));
+   
+    // OUTPUT EPISODE END FOR RL
+    std::cout << "EPISODE_END|" << player->getRank() << std::endl;
 }
-
 void StateRaceEnd::handleEvent(const sf::Event& event) {
-    if (Input::pressed(Key::ACCEPT, event) &&
-        timeExecutingState < ANIMATION_TOTAL_TIME) {
-        timeExecutingState = ANIMATION_TOTAL_TIME;
-    }
+    // REMOVED: No input skip needed for instant restart
     if (Input::pressed(Key::PAUSE, event) && !pushedPauseThisFrame) {
         pushedPauseThisFrame = true;
         // call draw and store so we can draw it over the screen
@@ -33,12 +29,10 @@ void StateRaceEnd::handleEvent(const sf::Event& event) {
         game.pushState(StatePtr(new StateRacePause(game, render)));
     }
 }
-
 bool StateRaceEnd::fixedUpdate(const sf::Time& deltaTime) {
     timeExecutingState += deltaTime;
     StateRace::currentTime += deltaTime;
     pushedPauseThisFrame = false;
-
     // Map object updates
     Map::updateObjects(deltaTime);
     for (unsigned int i = 0; i < drivers.size(); i++) {
@@ -58,7 +52,6 @@ bool StateRaceEnd::fixedUpdate(const sf::Time& deltaTime) {
         sf::Vector2f(cosf(player->posAngle), sinf(player->posAngle)) *
             ZOOM_OUT_DISTANCE * zoomOutPct;
     pseudoPlayer->posAngle = player->posAngle - animTurnAngle;
-
     // Ranking updates - last gradient contains
     auto hasntFinishedBegin = positions.begin();
     // don't sort drivers that have already finished the circuit
@@ -75,13 +68,10 @@ bool StateRaceEnd::fixedUpdate(const sf::Time& deltaTime) {
                       return lhs->getLaps() > rhs->getLaps();
                   }
               });
-
     // Collisions aren't handled on raceend state
-
     Lakitu::update(deltaTime);
     EndRanks::update(deltaTime);
-
-    if (timeExecutingState > ANIMATION_TOTAL_TIME && !hasPopped) {
+    if (!hasPopped) {
         hasPopped = true;
         Lakitu::showUntil(0, deltaTime);
         game.popState();
@@ -89,18 +79,15 @@ bool StateRaceEnd::fixedUpdate(const sf::Time& deltaTime) {
     Audio::updateListener(player->position, player->posAngle, player->height);
     return true;
 }
-
 void StateRaceEnd::draw(sf::RenderTarget& window) {
     // scale
     static constexpr const float NORMAL_WIDTH = 512.0f;
     const float scale = window.getSize().x / NORMAL_WIDTH;
-
     // Get textures from map
     sf::Texture tSkyBack, tSkyFront, tCircuit, tMap;
     Map::skyTextures(pseudoPlayer, tSkyBack, tSkyFront);
     Map::circuitTexture(pseudoPlayer, tCircuit);
     Map::mapTexture(tMap);
-
     // Create sprites and scale them accordingly
     sf::Sprite skyBack(tSkyBack), skyFront(tSkyFront), circuit(tCircuit),
         map(tMap);
@@ -109,7 +96,6 @@ void StateRaceEnd::draw(sf::RenderTarget& window) {
     float frontFactor = windowSize.x / (float)tSkyFront.getSize().x;
     skyBack.setScale(backFactor, backFactor);
     skyFront.setScale(frontFactor, frontFactor);
-
     // Sort them correctly in Y position and draw
     float currentHeight = 0;
     skyBack.setPosition(0.0f, currentHeight);
@@ -119,10 +105,8 @@ void StateRaceEnd::draw(sf::RenderTarget& window) {
     currentHeight += windowSize.y * Map::SKY_HEIGHT_PCT;
     circuit.setPosition(0.0f, currentHeight);
     window.draw(circuit);
-
     // Lakitu shadow
     Lakitu::drawShadow(window);
-
     // Circuit objects (must be before minimap)
     std::vector<std::pair<float, sf::Sprite*>> wallObjects;
     Map::getWallDrawables(window, pseudoPlayer, scale, wallObjects);
@@ -136,12 +120,10 @@ void StateRaceEnd::draw(sf::RenderTarget& window) {
     for (const auto& pair : wallObjects) {
         window.draw(*pair.second);
     }
-
     // Minimap
     currentHeight += windowSize.y * Map::CIRCUIT_HEIGHT_PCT;
     map.setPosition(0.0f, currentHeight);
     window.draw(map);
-
     // Minimap drivers
     std::sort(drivers.begin(), drivers.end(),
               [](const DriverPtr& lhs, const DriverPtr& rhs) {
@@ -158,13 +140,10 @@ void StateRaceEnd::draw(sf::RenderTarget& window) {
         miniDriver.scale(0.5f, 0.5f);
         window.draw(miniDriver);
     }
-
     // Lakitu
     Lakitu::draw(window);
-
     // Gui
     Gui::draw(window);
-
     // end ranks after lakitu
     EndRanks::draw(window);
 }

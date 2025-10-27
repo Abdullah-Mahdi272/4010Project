@@ -48,7 +48,7 @@ class Gui {
     static void reset(bool rankReset = true);
     static void stopEffects();
     
-
+    // Split timer methods
     static void initializeSplits(int maxGradient);
     static void updateSplits(const sf::Time &currentRaceTime, int currentGradient, 
                             int currentLap, const sf::Time &deltaTime,
