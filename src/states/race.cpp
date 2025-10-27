@@ -7,12 +7,24 @@ const sf::Time StateRace::TIME_BETWEEN_ITEM_CHECKS =
 
 const sf::Time StateRace::WAIT_FOR_PC_LAST_PLACE = sf::seconds(5.0f);
 
+StateRace::~StateRace() {
+    if (agent != nullptr) {
+        delete agent;
+        agent = nullptr;
+    }
+}
+
 void StateRace::init() {
     pushedPauseThisFrame = false;
     StateRace::currentTime = sf::Time::Zero;
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
     splitsInitialized = false;
+    
+    // ensure we have an Agent instance for this race
+    if (agent == nullptr) {
+        agent = new Agent();
+    }
 
     // reset agent stored state at race start
     if (agent != nullptr) {
@@ -95,6 +107,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
 
             // Agent code (if you still need it)
             if (agent != nullptr) {
+                std::cout << "=== AGENT STEP ===" << std::endl;
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
                 agent->updateAngle(driver->posAngle);

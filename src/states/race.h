@@ -42,7 +42,7 @@ class StateRace : public State {
     static sf::Time currentTime;
     static CCOption ccOption;
     Agent* agent = nullptr;
-    
+
     StateRace(Game& game, const DriverPtr& _player, const DriverArray& _drivers,
               RaceRankingArray& _positions)
         : State(game),
@@ -52,6 +52,8 @@ class StateRace : public State {
           positions(_positions) {
         init();
     }
+
+    ~StateRace(); // <-- added destructor to free agent
 
     void handleEvent(const sf::Event& event) override;
     bool fixedUpdate(const sf::Time& deltaTime) override;
