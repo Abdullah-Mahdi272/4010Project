@@ -4,6 +4,7 @@
 #include <iomanip>
 
 const sf::Time SplitTimer::SPLIT_DISPLAY_DURATION = sf::seconds(3.0f);
+const sf::Time SplitTimer::RL_OUTPUT_INTERVAL = sf::milliseconds(100);  // 10 Hz
 
 SplitTimer::SplitTimer() {
     // Initialize all member variables first
@@ -21,8 +22,9 @@ SplitTimer::SplitTimer() {
     displayingSplitIndex = -1;
     deltaIsPositive = false;
     splitDisplayTimer = sf::Time::Zero;
+    lastRLOutput = sf::Time::Zero;
     
-    // NEW: Initialize state data
+    // Initialize state data
     currentSpeed = 0.0f;
     currentTurnSpeed = 0.0f;
     currentAngle = 0.0f;
@@ -153,14 +155,17 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
         return;
     }
     
-    // NEW: Store current state data
+    // Store current state data
     currentPosition = position;
     currentSpeed = speed;
     currentTurnSpeed = turnSpeed;
     currentAngle = angle;
     
-    // NEW: Output state data for RL system (every frame)
-    outputStateData(currentRaceTime, currentGradient, currentLapNum);
+    // OUTPUT RL STATE AT REGULAR INTERVALS (10 Hz)
+    if (currentRaceTime - lastRLOutput >= RL_OUTPUT_INTERVAL) {
+        outputStateData(currentRaceTime, currentGradient, currentLapNum);
+        lastRLOutput = currentRaceTime;
+    }
     
     // Check if we've moved to a new lap
     if (currentLapNum != currentLap && currentLapNum > currentLap) {
@@ -259,6 +264,7 @@ void SplitTimer::reset() {
     showingDelta = false;
     splitDisplayTimer = sf::Time::Zero;
     displayingSplitIndex = -1;
+    lastRLOutput = sf::Time::Zero;
     
     // Reset state data
     currentSpeed = 0.0f;
