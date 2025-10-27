@@ -162,10 +162,10 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
     currentAngle = angle;
     
     // OUTPUT RL STATE AT REGULAR INTERVALS (10 Hz)
-    if (currentRaceTime - lastRLOutput >= RL_OUTPUT_INTERVAL) {
-        outputStateData(currentRaceTime, currentGradient, currentLapNum);
-        lastRLOutput = currentRaceTime;
-    }
+    // if (currentRaceTime - lastRLOutput >= RL_OUTPUT_INTERVAL) {
+    //     outputStateData(currentRaceTime, currentGradient, currentLapNum);
+    //     lastRLOutput = currentRaceTime;
+    // }
     
     // Check if we've moved to a new lap
     if (currentLapNum != currentLap && currentLapNum > currentLap) {
@@ -206,18 +206,18 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
 void SplitTimer::outputStateData(const sf::Time& currentRaceTime, int currentGradient, int currentLapNum) {
     // Output in structured format for RL system to parse
     // Format: RL_STATE|time|gradient|lap|split|posX|posY|speed|turnSpeed|angle
-    std::cout << "RL_STATE|"
-              << std::fixed << std::setprecision(3)
-              << currentRaceTime.asSeconds() << "|"
-              << currentGradient << "|"
-              << currentLapNum << "|"
-              << nextSplitIndex << "|"
-              << currentPosition.x << "|"
-              << currentPosition.y << "|"
-              << currentSpeed << "|"
-              << currentTurnSpeed << "|"
-              << currentAngle
-              << std::endl;
+//     std::cout << "RL_STATE|"
+//               << std::fixed << std::setprecision(3)
+//               << currentRaceTime.asSeconds() << "|"
+//               << currentGradient << "|"
+//               << currentLapNum << "|"
+//               << nextSplitIndex << "|"
+//               << currentPosition.x << "|"
+//               << currentPosition.y << "|"
+//               << currentSpeed << "|"
+//               << currentTurnSpeed << "|"
+//               << currentAngle
+//               << std::endl;
 }
 
 void SplitTimer::resetForNewLap(int lapNumber) {

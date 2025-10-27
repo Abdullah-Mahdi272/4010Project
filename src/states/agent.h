@@ -1,6 +1,11 @@
 #pragma once
 #include <iostream>
 #include <cmath>
+#include <tuple>
+#include <vector>
+#include <map>
+#include <string>
+
 class Agent {
 public:
     Agent();
@@ -10,6 +15,14 @@ public:
     float getSpeedForward();
     float getSpeedTurn();
     float getAngle();
+    void render();
+    int getNextAction();
+
+    void reset();
+
+    std::tuple<std::vector<float>, float, bool, bool, std::map<std::string, float>> step(int);
+    void setTerminated(bool t);
+    void setTruncated(bool t);
 
 private:
     float positionX;
@@ -17,4 +30,13 @@ private:
     float speedForward;
     float speedTurn;
     float angle;
+
+    float prevPositionX;
+    float prevPositionY;
+    float prevSpeedForward;
+    float prevSpeedTurn;
+    float prevAngle;
+
+    bool terminated;
+    bool truncated;
 };

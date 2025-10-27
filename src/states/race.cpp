@@ -13,6 +13,11 @@ void StateRace::init() {
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
     splitsInitialized = false;
+
+    // reset agent stored state at race start
+    if (agent != nullptr) {
+        agent->reset();
+    }
 }
 
 void StateRace::handleEvent(const sf::Event& event) {
@@ -93,6 +98,13 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
                 agent->updateAngle(driver->posAngle);
+                agent->render();
+                if (raceFinished) {
+                    agent->setTerminated(true);
+                }
+                
+                auto [obs, reward, terminated, truncated, info] = agent->step(0);
+
             }
         }
     }
