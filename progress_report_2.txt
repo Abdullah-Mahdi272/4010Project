@@ -1,0 +1,17 @@
+This reading week my group and I were able to achieve substantial improvements to our work
+preparing us for success as we inch closer to the final due date for the project. We were able to extract some information
+that will be useful to provide the agent with as states such as speed, turn speed, angle, position X, and position Y.
+We also implemented a random agent to prepare a layout for allowing the agent to take action, in other words instead of asking
+the random agent for currently random (uninformed) actions we can replace the return to be the action with the highest QValue
+that allows the agent to move (informed).
+We also implemented checkpoints allowing us to provide small milestones for our agent at different intervals, we believe that
+this could promote our agent to learn sooner as it will be getting big rewards from each checkpoint rather than needing
+to reach the end of the game until termination for the reward to be given. 
+We also changed the game to instantly restart once the round is terminated either by the agent reaching the end or everyone except
+for the agent reaching the end as well as skip the countdown at the start of a round.
+We implemented and recognized some of the essential functions that will be needed for when we implement our agents such as step, render, init, and reset
+We removed the audio as it was causing some issues and will not be needed by the agent regardless.
+Moving on in the coming 2 weeks we will be starting and potentially completing the implementation of a TD Qlearning agent,
+our goal currently is to focus on the implementation of a td qlearning agent so we can start exploring the posibility and feasability of
+implementing a gradient descent reinforcement learning approach with the limited time we have. Creating any informed agent is our priority before we attempt
+to explore adding any other agents.
