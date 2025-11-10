@@ -5,7 +5,10 @@
 #include <vector>
 #include <map>
 #include <string>
+"""
+Class representing our agent in the mario kart environment and its methods
 
+"""
 class Agent {
 public:
     Agent();
