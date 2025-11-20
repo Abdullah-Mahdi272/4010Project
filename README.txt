@@ -1,15 +1,3 @@
-================================================================================
-Mario Kart 64 Reinforcement Learning Agent
-================================================================================
-
-This project implements a reinforcement learning agent for Mario Kart 64 using
-the Actor-Critic (A2C) algorithm. The agent learns to complete laps on the
-correct racing path while avoiding obstacles and stuck situations.
-
-================================================================================
-OVERVIEW
-================================================================================
-
 The RL agent is trained using a custom reward scheme designed to prioritize:
 1. Lap completion (highest priority)
 2. Forward progress on the correct racing path
@@ -18,13 +6,6 @@ The RL agent is trained using a custom reward scheme designed to prioritize:
 The game state is tracked through position values that DECREASE as the player
 progresses (e.g., position 419 → 0 indicates forward movement toward the
 finish line).
-
-================================================================================
-REWARD SCHEME
-================================================================================
-
-Core Values
------------
 
 REWARDS:
 - Lap completion: +5000 (enables exploration while maintaining high priority)
@@ -46,8 +27,6 @@ PENALTIES (escalating severity):
 - Wall collision: -60
 - Time penalty: -0.05/step (encourages fast completion)
 
-Design Rationale
-----------------
 
 The reward scheme balances three critical objectives:
 
@@ -68,12 +47,8 @@ The reward scheme balances three critical objectives:
      permanently stuck
    - Episode termination at 2 minutes prevents hopeless situations
 
-================================================================================
-TESTING
-================================================================================
 
 Manual Testing (In-Game)
-------------------------
 
 To manually test that the environment and reward system work correctly in
 the game:
@@ -102,9 +77,6 @@ the game:
 
 5. Interrupt: Press Ctrl+C to stop
 
-================================================================================
-TRAINING
-================================================================================
 
 Running Training
 ----------------
@@ -151,26 +123,10 @@ Models are saved to:
 - actor_model_checkpoint_ep{N}.pth - Actor network weights
 - critic_model_checkpoint_ep{N}.pth - Critic network weights
 
-================================================================================
-PROJECT STRUCTURE
-================================================================================
-
-~/F25_4010/1.2/cloned_4010Project/
-├── README.txt                          # This file
-├── position_log.txt                    # Position data log
-└── rl_environment/
-    ├── reward_computer.py              # Reward computation logic
-    ├── mario_kart_env_improved.py      # OpenAI Gym environment
-    ├── train_robust_ac.py              # A2C training script
-    ├── actor_critic.py                 # Neural network models
-    └── ...
-
-================================================================================
 KEY FILES
-================================================================================
+
 
 reward_computer.py
-------------------
 Contains the ImprovedRacingRewardComputer class that implements the reward
 scheme. This is the core logic that guides agent learning.
 
@@ -180,7 +136,6 @@ Key methods:
 - get_episode_stats() - Returns episode progress metrics
 
 mario_kart_env_improved.py
---------------------------
 OpenAI Gym environment wrapper for Mario Kart 64. Handles:
 - Game state extraction (position, speed, lap, etc.)
 - Action execution (button presses)
@@ -188,16 +143,12 @@ OpenAI Gym environment wrapper for Mario Kart 64. Handles:
 - Reward computation via reward_computer.py
 
 train_robust_ac.py
-------------------
 Training script using Actor-Critic algorithm. Features:
 - Neural network actor and critic models
 - Episode rollout and gradient computation
 - Model checkpointing
 - Training statistics logging
 
-================================================================================
-STATE FORMAT
-================================================================================
 
 The game state is an 11-element array:
 [time, position, lap, split, posX, posY, speed, turnSpeed, angle, rank, coins]
@@ -207,29 +158,6 @@ Critical notes:
 - Position wraps from low to high at lap completion
 - Speed and spatial coordinates (posX, posY) detect movement
 - All values are normalized to reasonable ranges
-
-================================================================================
-TROUBLESHOOTING
-================================================================================
-
-Game won't start during manual testing:
-- Check that the emulator is properly configured
-- Verify ROM is loaded and accessible
-- Check console output for error messages
-
-Reward values seem wrong:
-- Check that position values are decreasing during forward movement
-- Verify stuck_counter is resetting when making progress
-- Review reward_computer.py for current reward/penalty values
-
-Training is very slow:
-- This is expected - each episode takes 2-3 minutes
-- Consider reducing episode count for initial testing
-- Training on GPU will not significantly help (environment bottleneck)
-
-================================================================================
-ADDITIONAL INFORMATION
-================================================================================
 
 Game mechanics:
 - The game runs at 60 FPS (60 frames per second)
@@ -244,7 +172,3 @@ Reward tuning:
 - This ratio enables exploration while maintaining strong gradients toward
   the goal
 
-Performance expectations:
-- Agent should complete first lap within 50-100 episodes
-- Consistent lap completion expected by episode 150-200
-- Optimal racing line may require additional training beyond 200 episodes
