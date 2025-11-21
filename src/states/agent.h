@@ -1,33 +1,49 @@
 #pragma once
-#include <iostream>
-#include <cmath>
-#include <tuple>
-#include <vector>
-#include <map>
-#include <string>
-"""
-Class representing our agent in the mario kart environment and its methods
 
-"""
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <tuple>
+#include <map>
+#include <fstream>
+#include <iomanip>
 class Agent {
 public:
     Agent();
+    void reset();
+    void dumpQToFile(const std::string& filename) const;
     void updatePosition(float x, float y);
     void updateSpeed(float forward, float turn);
-    void updateAngle(float angle);
+    void updateAngle(float a);
+    void updateGradient(int g);
+    int  getGradient() const;
+
     float getSpeedForward();
     float getSpeedTurn();
     float getAngle();
+
     void render();
-    int getNextAction();
+    std::unordered_map<std::string, std::vector<float>>& getQ();
+    void setQ(const std::unordered_map<std::string, std::vector<float>>& newQ);
 
-    void reset();
+    std::string getStateKey();
+    std::string getPrevStateKey();
 
-    std::tuple<std::vector<float>, float, bool, bool, std::map<std::string, float>> step(int);
+    int  getPrevAction();
+    void setPrevAction(int action);
+
+    int selectBestAction(int nActions);
+
     void setTerminated(bool t);
     void setTruncated(bool t);
+    float getPositionX() const { return positionX; }
+    float getPositionY() const { return positionY; }
+
+    std::tuple<std::vector<float>, float, bool, bool, std::map<std::string, float>>
+    step(int action);
 
 private:
+    
     float positionX;
     float positionY;
     float speedForward;
@@ -40,6 +56,16 @@ private:
     float prevSpeedTurn;
     float prevAngle;
 
-    bool terminated;
-    bool truncated;
+    int   prevAction;
+
+    bool  terminated;
+    bool  truncated;
+
+    int gradient;
+    int prevGradient;
+
+    int posIndex;
+    int prevPosIndex;
+
+    std::unordered_map<std::string, std::vector<float>> Q;
 };

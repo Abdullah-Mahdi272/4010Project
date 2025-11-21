@@ -34,6 +34,8 @@ void StateRaceManager::init(const float _speedMultiplier,
                                       _playerCharacterMultiplier);
     Lakitu::reset();
     Gui::reset(true);
+    agent = new Agent();
+    this->learning = new QLearning();
     currentCircuit = _circuit;
     autoRestartEnabled = true; // ENABLE AUTO-RESTART FOR RL TRAINING
     unsigned int modifiersIndexer[(unsigned int)MenuPlayer::__COUNT] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -91,9 +93,13 @@ bool StateRaceManager::update(const sf::Time &) {
 #endif
             StateRace::ccOption = ccOption;
             Driver::realPlayer = drivers[(unsigned int)selectedPlayer];
+            
             game.pushState(StatePtr(
                 new StateRace(game, drivers[(unsigned int)selectedPlayer],
-                              drivers, positions)));
+                              drivers, positions, agent, learning)));
+            
+            agent->reset();
+            
 #ifndef NO_ANIMATIONS
             Audio::play(Music::CIRCUIT_ANIMATION_START, false);
             sf::Vector2f cameraInitPosition =

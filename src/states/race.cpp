@@ -1,4 +1,5 @@
 #include "race.h"
+// #include <random>  // for RL exploration if you re-enable the agent
 
 // #define DEBUG_POSITION_RANKING  // uncomment to show positions in ranking
 
@@ -8,33 +9,38 @@ const sf::Time StateRace::TIME_BETWEEN_ITEM_CHECKS =
 const sf::Time StateRace::WAIT_FOR_PC_LAST_PLACE = sf::seconds(5.0f);
 
 StateRace::~StateRace() {
-    if (agent != nullptr) {
-        delete agent;
-        agent = nullptr;
-    }
+    // if (agent != nullptr) {
+    //     delete agent;
+    //     agent = nullptr;
+    // }
 }
 
 void StateRace::init() {
+    // Avoid calling updateMinimap too early, textures/map may not be ready yet
+    // Map::updateMinimap();
+    // Map::generateTextures();
+
+    std::cout << "Initializing StateRace" << std::endl;
     pushedPauseThisFrame = false;
     StateRace::currentTime = sf::Time::Zero;
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
     splitsInitialized = false;
-
-    //random
-    //false = player control
-    random_enabled = true;
-    randomAI = std::make_unique<RandomAgent>();
     
-    // ensure we have an Agent instance for this race
-    if (agent == nullptr) {
-        agent = new Agent();
-    }
+    // random
+    // false = player control
+    // random_enabled = true;
+    // randomAI = std::make_unique<RandomAgent>();
+    // agent = nullptr;
 
-    // reset agent stored state at race start
-    if (agent != nullptr) {
-        agent->reset();
-    }
+    // if (agent) {
+    //     std::cout << "Creating new Agent" << std::endl;
+    //     agent = new Agent();
+    // }
+
+    // if (agent != nullptr) {
+    //     agent->reset();
+    // }
 }
 
 void StateRace::handleEvent(const sf::Event& event) {
@@ -59,10 +65,21 @@ void StateRace::handleEvent(const sf::Event& event) {
     // pause menu
     if (Input::pressed(Key::PAUSE, event) && !pushedPauseThisFrame) {
         pushedPauseThisFrame = true;
-        // call draw and store so we can draw it over the screen
-        sf::RenderTexture render;
+
         sf::Vector2u windowSize = game.getWindow().getSize();
-        render.create(windowSize.x, windowSize.y);
+        if (windowSize.x == 0 || windowSize.y == 0) {
+            std::cerr
+                << "ERROR: Window size is 0 in handleEvent, cannot create pause render texture\n";
+            return;
+        }
+
+        sf::RenderTexture render;
+        if (!render.create(windowSize.x, windowSize.y)) {
+            std::cerr
+                << "ERROR: Failed to create pause render texture\n";
+            return;
+        }
+
         fixedUpdate(sf::Time::Zero);
         draw(render);
         game.pushState(StatePtr(new StateRacePause(game, render)));
@@ -95,62 +112,9 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         Audio::updateEngine(i, driver->position, driver->height,
                             driver->speedForward, driver->speedTurn);
                             
+        // random agent (old code commented out)
+        // ...
 
-        //random agent
-        //if random is enabled and if this driver is the player
-        if (random_enabled && driver == player) {
-            //update randomAI for this frame, get new random action
-            randomAI->update(deltaTime.asSeconds());
-            //get the random action
-            const auto& d = randomAI->action();
-
-    
-        //if plauer os on the ground
-        if (driver->height == 0.0f) {
-            //if accelerate
-            if (d.accel) {
-                //accelerate smoothly until max speed
-                float f = driver->vehicle->motorAcceleration * 0.5f;
-                driver->speedForward = std::min(driver->speedForward + f * deltaTime.asSeconds(), driver->vehicle->maxNormalLinearSpeed);
-            }
-            //braking
-            if (d.brake) {
-                //accelerate backwards 
-                float b = driver->vehicle->motorAcceleration * 0.6f;
-                driver->speedForward = std::max(driver->speedForward - b * deltaTime.asSeconds(), 0.0f);
-            }
-        }
-
-        //turning
-        //if turning left
-        if (d.left && !d.right) {
-            driver->speedTurn = -driver->vehicle->maxTurningAngularSpeed * 0.5f;
-        } 
-        //if turning right
-        else if (d.right && !d.left) {
-            driver->speedTurn =  driver->vehicle->maxTurningAngularSpeed * 0.5f;
-        } 
-        //if not turning (going back to moving straight)
-        else {
-            //reduce turning
-            driver->speedTurn /= 1.5f;
-        }
-
-        //drift (jump)
-        //if driver is able to drive and is on the ground
-        if (d.drift && driver->canDrive() && driver->height == 0.0f) {
-            driver->shortJump();
-        }
-
-        //if random agent decides to use item AND if player is able to drive AND if player has item
-        if (d.item && driver->canDrive() && driver->getPowerUp() != PowerUps::NONE) {
-            //uses item to front (false would be backwards)
-            Item::useItem(driver, positions, true);
-        }
-
-        //end of randdom agent
-}
-        
         if (driver == player) {
             // Update split timer for player WITH REAL DATA
             if (splitsInitialized) {
@@ -166,20 +130,91 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                 );
             }
 
-            // Agent code (if you still need it)
             if (agent != nullptr) {
-                std::cout << "=== AGENT STEP ===" << std::endl;
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
                 agent->updateAngle(driver->posAngle);
-                agent->render();
+                std::cout << "STATE:      " << agent->getStateKey() << "\n"
+                          << "PREV STATE: " << agent->getPrevStateKey() << "\n"
+                          << "---------------------------\n";
+            }
+
+            if (agent != nullptr && learning != nullptr) {
+                agent->updatePosition(driver->position.x, driver->position.y);
+                agent->updateSpeed(driver->speedForward, driver->speedTurn);
+                agent->updateAngle(driver->posAngle);
+
+                auto& Q = agent->getQ();
+                const int nActions = 4;
+
+                learning->QLearningStep(*agent, Q, 0.9f, 0.1f, 0.2f, nActions);
+
                 if (raceFinished) {
                     agent->setTerminated(true);
                 }
-                
-                auto [obs, reward, terminated, truncated, info] = agent->step(0);
+
+                int bestAction = agent->selectBestAction(nActions);
+                agent->setPrevAction(bestAction);
+
+                RandomAction policyAct{};
+                switch (bestAction) {
+                    case 0:
+                        
+                        policyAct.accel = true;
+                        break;
+                    case 1:
+                        
+                        policyAct.accel = true;
+                        policyAct.left = true;
+                        break;
+                    case 2:
+                        
+                        policyAct.accel = true;
+                        policyAct.right = true;
+                        break;
+                    case 3:
+                        
+                        policyAct.brake = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                const auto& d = policyAct;
+
+                if (driver->height == 0.0f) {
+                    if (d.accel) {
+                        float f = driver->vehicle->motorAcceleration * 0.5f;
+                        driver->speedForward = std::min(
+                            driver->speedForward + f * deltaTime.asSeconds(),
+                            driver->vehicle->maxNormalLinearSpeed
+                        );
+                    }
+                    if (d.brake) {
+                        float b = driver->vehicle->motorAcceleration * 0.6f;
+                        driver->speedForward = std::max(
+                            driver->speedForward - b * deltaTime.asSeconds(),
+                            0.0f
+                        );
+                    }
+                }
+
+                if (d.left && !d.right) {
+                    driver->speedTurn =
+                        -driver->vehicle->maxTurningAngularSpeed * 0.5f;
+                } else if (d.right && !d.left) {
+                    driver->speedTurn =
+                        driver->vehicle->maxTurningAngularSpeed * 0.5f;
+                } else {
+                    driver->speedTurn /= 1.5f;
+                }
+
+                std::cout << "STATE:      " << agent->getStateKey() << "\n"
+                          << "PREV STATE: " << agent->getPrevStateKey() << "\n"
+                          << "---------------------------\n";
 
             }
+            
         }
     }
     
@@ -196,6 +231,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
             }
         }
     }
+
     Map::updateObjects(deltaTime);
     Audio::updateListener(player->position, player->posAngle, player->height);
 
@@ -242,6 +278,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
            hasntFinishedBegin < positions.end()) {
         ++hasntFinishedBegin;
     }
+
     std::sort(hasntFinishedBegin, positions.end(),
               [](const Driver* lhs, const Driver* rhs) {
                   // returns true if player A is ahead of B
@@ -251,6 +288,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                       return lhs->getLaps() > rhs->getLaps();
                   }
               });
+
     // find current player and update GUI
     for (unsigned int i = 0; i < positions.size(); i++) {
         positions[i]->rank = i;
@@ -274,12 +312,14 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         positions[positions.size() - 2]->getLaps() > NUM_LAPS_IN_CIRCUIT) {
         waitForPCTime = currentTime + WAIT_FOR_PC_LAST_PLACE;
     }
+
     // end the race if player has finished or all other AI have finished and the
     // grace time has ended
     if ((player->getLaps() > NUM_LAPS_IN_CIRCUIT ||
          (waitForPCTime != sf::Time::Zero && currentTime > waitForPCTime &&
           player->canDrive() && player->height == 0.0f)) &&
         !raceFinished) {
+
         raceFinished = true;
 
         CollisionHashMap::resetStatic();

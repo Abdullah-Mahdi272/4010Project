@@ -125,9 +125,27 @@ void Game::updateResolution() {
     if (window.isOpen()) {
         window.close();
     }
+
     unsigned int resolutionMultiplier = Settings::getResolutionMultiplier();
-    window.create(sf::VideoMode(baseWidth * resolutionMultiplier,
-                                baseHeight * resolutionMultiplier),
+
+    // Safety: never allow 0 or negative multiplier
+    if (resolutionMultiplier == 0) {
+        std::cerr << "Warning: resolution multiplier was 0, defaulting to 1\n";
+        resolutionMultiplier = 1;
+    }
+
+    unsigned int width  = baseWidth  * resolutionMultiplier;
+    unsigned int height = baseHeight * resolutionMultiplier;
+
+    // Extra belt-and-suspenders: avoid 0 width/height
+    if (width == 0 || height == 0) {
+        std::cerr << "Warning: computed window size " 
+                  << width << "x" << height << ", forcing 640x480\n";
+        width = 1280;
+        height = 720;
+    }
+
+    window.create(sf::VideoMode(width, height),
                   "Super Mario Kart", WINDOW_STYLE);
     window.setFramerateLimit(framerate);
     Gui::setWindowSize(window.getSize());

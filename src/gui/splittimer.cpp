@@ -115,7 +115,7 @@ SplitTimer::SplitTimer() {
     deltaSignSprite.setTexture(deltaSignTextures[0]);
     deltaSignSprite.scale(scaleFactor);
     
-    std::cout << "SplitTimer initialized successfully." << std::endl;
+    // std::cout << "SplitTimer initialized successfully." << std::endl;
 }
 
 void SplitTimer::initializeCheckpoints(int maxGradient) {
@@ -142,9 +142,9 @@ void SplitTimer::initializeCheckpoints(int maxGradient) {
     checkpointsInitialized = true;
     
     // Debug output
-    std::cout << "Split checkpoints initialized with max gradient: " << maxGradient << std::endl;
+    // std::cout << "Split checkpoints initialized with max gradient: " << maxGradient << std::endl;
     for (int i = 0; i < NUM_SPLITS; i++) {
-        std::cout << "  Checkpoint " << (i + 1) << ": " << checkpointGradients[i] << std::endl;
+        // std::cout << "  Checkpoint " << (i + 1) << ": " << checkpointGradients[i] << std::endl;
     }
 }
 
@@ -179,10 +179,10 @@ void SplitTimer::update(const sf::Time& currentRaceTime, int currentGradient, in
             currentLapSplits[nextSplitIndex] = currentRaceTime;
             splitsCrossed[nextSplitIndex] = true;
             
-            std::cout << "*** SPLIT " << (nextSplitIndex + 1) << " CROSSED! ***" << std::endl;
-            std::cout << "    Time: " << currentRaceTime.asSeconds() << "s" << std::endl;
-            std::cout << "    Gradient: " << currentGradient << std::endl;
-            std::cout << "    Checkpoint threshold: " << checkpointGradients[nextSplitIndex] << std::endl;
+            // std::cout << "*** SPLIT " << (nextSplitIndex + 1) << " CROSSED! ***" << std::endl;
+            // std::cout << "    Time: " << currentRaceTime.asSeconds() << "s" << std::endl;
+            // std::cout << "    Gradient: " << currentGradient << std::endl;
+            // std::cout << "    Checkpoint threshold: " << checkpointGradients[nextSplitIndex] << std::endl;
             
             // Display the split
             displaySplit(nextSplitIndex, currentRaceTime);
@@ -225,7 +225,7 @@ void SplitTimer::resetForNewLap(int lapNumber) {
         return;
     }
     
-    std::cout << "=== LAP TRANSITION: " << currentLap << " -> " << lapNumber << " ===" << std::endl;
+    // std::cout << "=== LAP TRANSITION: " << currentLap << " -> " << lapNumber << " ===" << std::endl;
     
     // Save current lap splits to previous lap
     for (int i = 0; i < NUM_SPLITS; i++) {
@@ -235,7 +235,7 @@ void SplitTimer::resetForNewLap(int lapNumber) {
         if (currentLapSplits[i] != sf::Time::Zero) {
             if (bestSplits[i] == sf::Time::Zero || currentLapSplits[i] < bestSplits[i]) {
                 bestSplits[i] = currentLapSplits[i];
-                std::cout << "  New best for split " << (i + 1) << ": " << bestSplits[i].asSeconds() << "s" << std::endl;
+                // std::cout << "  New best for split " << (i + 1) << ": " << bestSplits[i].asSeconds() << "s" << std::endl;
             }
         }
         
@@ -247,7 +247,7 @@ void SplitTimer::resetForNewLap(int lapNumber) {
     currentLap = lapNumber;
     nextSplitIndex = 0;
     
-    std::cout << "SplitTimer reset for lap " << lapNumber << std::endl;
+    // std::cout << "SplitTimer reset for lap " << lapNumber << std::endl;
 }
 
 void SplitTimer::reset() {
@@ -272,7 +272,7 @@ void SplitTimer::reset() {
     currentAngle = 0.0f;
     currentPosition = sf::Vector2f(0.0f, 0.0f);
     
-    std::cout << "SplitTimer fully reset." << std::endl;
+    // std::cout << "SplitTimer fully reset." << std::endl;
 }
 
 void SplitTimer::setWindowSize(sf::Vector2u s) {
@@ -314,7 +314,7 @@ void SplitTimer::setWindowSize(sf::Vector2u s) {
     // Position delta display right below split display
     deltaDisplayPosition = sf::Vector2f(s.x * 0.05f, s.y * 0.22f);
     
-    std::cout << "SplitTimer window size set: " << s.x << "x" << s.y << std::endl;
+    // std::cout << "SplitTimer window size set: " << s.x << "x" << s.y << std::endl;
 }
 
 void SplitTimer::displaySplit(int splitIndex, const sf::Time& splitTime) {
@@ -322,8 +322,8 @@ void SplitTimer::displaySplit(int splitIndex, const sf::Time& splitTime) {
         return;
     }
     
-    std::cout << "*** DISPLAYING SPLIT " << (splitIndex + 1) << " on screen ***" << std::endl;
-    std::cout << "    Split time: " << splitTime.asSeconds() << "s" << std::endl;
+    // std::cout << "*** DISPLAYING SPLIT " << (splitIndex + 1) << " on screen ***" << std::endl;
+    // std::cout << "    Split time: " << splitTime.asSeconds() << "s" << std::endl;
     
     showingSplit = true;
     displayingSplitIndex = splitIndex;
@@ -354,7 +354,7 @@ void SplitTimer::displayDelta(int splitIndex, const sf::Time& currentTime) {
     sf::Time delta = currentTime - comparisonTime;
     deltaIsPositive = delta.asMilliseconds() >= 0;
     
-    std::cout << "    Delta: " << (deltaIsPositive ? "+" : "-") << std::abs(delta.asMilliseconds()) << "ms" << std::endl;
+    // std::cout << "    Delta: " << (deltaIsPositive ? "+" : "-") << std::abs(delta.asMilliseconds()) << "ms" << std::endl;
     
     // Format absolute value of delta
     sf::Time absDelta = sf::milliseconds(std::abs(delta.asMilliseconds()));

@@ -17,7 +17,7 @@
 #include "states/racepause.h"
 #include "states/agent.h"
 #include "states/statebase.h"
-
+#include "states/QLearning.h"
 #include "random_agent.h"
 
 class StateRace : public State {
@@ -48,18 +48,21 @@ class StateRace : public State {
     static sf::Time currentTime;
     static CCOption ccOption;
     Agent* agent = nullptr;
+    QLearning* learning = nullptr;
 
     StateRace(Game& game, const DriverPtr& _player, const DriverArray& _drivers,
-              RaceRankingArray& _positions)
+              RaceRankingArray& _positions, Agent* _agent, QLearning* _learning)
         : State(game),
           player(_player),
           drivers(_drivers),
           miniDrivers(_drivers),
-          positions(_positions) {
+          positions(_positions),
+          agent(_agent),
+          learning(_learning) {
         init();
     }
 
-    ~StateRace(); // <-- added destructor to free agent
+    ~StateRace(); 
 
     void handleEvent(const sf::Event& event) override;
     bool fixedUpdate(const sf::Time& deltaTime) override;

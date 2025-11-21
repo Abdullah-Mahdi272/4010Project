@@ -35,6 +35,8 @@ const std::array<std::string, 5> CIRCUIT_ASSET_NAMES = {
 #include "states/raceend.h"
 #include "states/racestart.h"
 #include "states/statebase.h"
+#include "states/QLearning.h"
+
 class StateRaceManager : public State {
    private:
     RaceMode mode;
@@ -63,6 +65,8 @@ class StateRaceManager : public State {
     void resetBeforeRace();
     void setPlayer();
    public:
+    Agent* agent = nullptr;
+    QLearning* learning = nullptr;
     StateRaceManager(Game &game, const RaceMode _mode,
                      const float _speedMultiplier,
                      const float _playerCharacterMultiplier,
