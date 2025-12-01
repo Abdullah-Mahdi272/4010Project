@@ -264,6 +264,9 @@ class MarioKartEnv(gym.Env):
         if self.process and self.process.stdin:
             try:
                 self.process.stdin.write("RESET\n")
+                # Added more reset signals confirm the agent resets after being stuck
+                self.process.stdin.write("RESET\n")
+                self.process.stdin.write("RESET\n")
                 self.process.stdin.flush()
             except:
                 pass
