@@ -155,7 +155,7 @@ class DQNAgent(RLAgentBase):
         # Complete last transition
         #if hasattr(self, 'last_transition'):
             #state, action, reward, done = self.last_transition
-            #self.replay_buffer.push(state, action, reward, next_state, done)
+        #self.replay_buffer.push(state, action, reward, next_state, done)
 
         # Track episode completion
         ep_reward = self.current_episode_reward
