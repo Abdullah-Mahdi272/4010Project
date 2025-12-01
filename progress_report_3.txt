@@ -10,6 +10,8 @@ Abdullah impleneted a TDQLearning agent in C++ seperate from Shane's implementat
 
 Camilla modified a DQN implementation that is also built on the python wrapper and it's results will directly be compared to the actor-critic's.
 
+Sara is currently working on the final project report.
+
 We experimented with different rewards to find a reward structure that can help the agent not drive directly into walls and getting stuck in corners.
 
 These 2 implementations are currently on two seperate branches, abdullah-tdqlearning and python-rl-prototype. Files will be cherry picked from both branches and implemented into main as there is currently a bug in python-rl-prototype that is negatively affecting our agent's learning.
