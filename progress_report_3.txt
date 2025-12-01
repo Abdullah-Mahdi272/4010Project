@@ -10,7 +10,7 @@ Abdullah impleneted a TDQLearning agent in C++ seperate from Shane's implementat
 
 Camilla modified a DQN implementation that is also built on the python wrapper and it's results will directly be compared to the actor-critic's.
 
-Sara is currently working on the final project report.
+Sara modified DQN implementation to store all transitions in branch sara_dqn_tweak and is currently working on the final project report.
 
 We experimented with different rewards to find a reward structure that can help the agent not drive directly into walls and getting stuck in corners.
 
