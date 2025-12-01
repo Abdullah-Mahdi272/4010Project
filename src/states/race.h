@@ -19,6 +19,21 @@
 #include "states/statebase.h"
 
 #include "random_agent.h"
+#include "MonteCarloAgent.h"
+
+
+
+
+
+struct PlayerInfo{
+  float progress;
+  float speed;
+  float angle;
+  int rank;
+  int lap;
+  bool onGround;
+  bool canDrive;
+};
 
 class StateRace : public State {
   private:
@@ -38,13 +53,30 @@ class StateRace : public State {
     //random 
     bool random_enabled = false;
     std::unique_ptr<RandomAgent> randomAI;
+
+    //monte carlo
+    bool mc_enabled = false;
+    double lastProgress = 0.0;
+    float stuckTimer = 0.0f;
     
+    static std::unique_ptr<MonteCarloAgent> mcAgent;
+
+    double lastRewardProgress = 0.0;
+    bool rewardInit = false;
+    bool collidedThisFrame = false;
+    int noProgressFrames = 0;
+    
+    float maxEpisodeTimeSecs = 15.0f;
+    
+    //end of monte carlo
+
     // if player is in last place and all 7 AI finish, give some seconds to
     // the player and after that finish the game
     static const sf::Time WAIT_FOR_PC_LAST_PLACE;
     sf::Time waitForPCTime;
 
    public:
+    PlayerInfo getPlayerInfo(const DriverPtr& driver);
     static sf::Time currentTime;
     static CCOption ccOption;
     Agent* agent = nullptr;
@@ -68,4 +100,7 @@ class StateRace : public State {
     void init();
 
     inline std::string string() const override { return "Race"; }
+
+    
 };
+

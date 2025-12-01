@@ -1,6 +1,104 @@
 #include "race.h"
-
+std::unique_ptr<MonteCarloAgent> StateRace::mcAgent = nullptr;
 // #define DEBUG_POSITION_RANKING  // uncomment to show positions in ranking
+
+//monte carlo
+//calculate progress
+static float getProgress(const Driver& d){
+    //get maximum gradient index (how many parts of track, high early, low later)
+    int maxG = AIGradientDescent::MAX_POSITION_MATRIX;
+    //num laps
+    int lap = d.getLaps();
+    //current pqrt of track
+    int gradient = d.getLastGradient();
+
+    //if gradient less than 0
+    if (gradient < 0){
+        gradient = 0;
+    }
+    //if gradient indexx out of bounds
+    if (gradient > maxG) {
+        gradient = maxG;
+    }
+    //return progresss
+    return static_cast<float>(lap * (maxG + 1) + (maxG - gradient));
+
+}
+
+//monte carlo
+//makes current state into stateId (ddiscretize state space)
+static int makeStateId(const DriverPtr& driver){
+    //get max gradient index
+    int maxG = AIGradientDescent::MAX_POSITION_MATRIX;
+
+    //get lap that agent is on
+    int lap = driver->getLaps();
+    //if lap less than 0, set to 0
+    if(lap < 0){
+        lap = 0;
+    }
+
+    //if lap is > 3, set to 3 max
+    if(lap > 3){
+        lap = 3;
+    }
+
+    //get graddient of agent
+    int grad = driver->getLastGradient();
+    //if gradient out of bounds, set in bounds
+    if (grad < 0) {
+        grad = 0;
+    }
+    if (grad > maxG) {
+        grad = maxG;
+    }
+
+    //gradient bins to split up track (reasonable number of sections)
+    const int GRAD_BINS = 20;
+
+    
+    int gradBin = 0;
+    if(maxG > 0){
+        //convert actual gradient to reasonable number
+        gradBin = grad * GRAD_BINS / (maxG + 1);
+        //if it goes out of bounds
+        if(gradBin >= GRAD_BINS){
+            gradBin = GRAD_BINS - 1;
+        }
+    }
+
+    //speed bins to split different speed values into reasonable number
+    float speed = driver->speedForward;
+    float maxSpeed = driver->vehicle->maxNormalLinearSpeed;
+
+    //5 speeds
+    const int SPEED_BINS = 5;
+    int speedBin = 0;
+
+
+    if(maxSpeed > 0.0f){
+        //if speed out of bounds
+        if(speed < 0.0f){
+            speed = 0.0f;
+        }
+
+        if(speed > maxSpeed){
+            speed = maxSpeed;
+        }
+        //map speed to speed bin
+        speedBin = static_cast<int>(speed * SPEED_BINS / maxSpeed);
+
+        //if speed bin out of bounds
+        if(speedBin >= SPEED_BINS){
+            speedBin = SPEED_BINS - 1;
+        }
+    }
+
+    //combine into one state ID [lap][gradient][speed]
+    int stateId = lap * (GRAD_BINS * SPEED_BINS) + gradBin * SPEED_BINS + speedBin;
+
+    return stateId;
+}
 
 const sf::Time StateRace::TIME_BETWEEN_ITEM_CHECKS =
     sf::seconds(1.0f) / (float)Item::UPDATES_PER_SECOND;
@@ -20,11 +118,24 @@ void StateRace::init() {
     nextItemCheck = sf::Time::Zero;
     waitForPCTime = sf::Time::Zero;
     splitsInitialized = false;
+    collidedThisFrame = false;
 
     //random
     //false = player control
     random_enabled = true;
     randomAI = std::make_unique<RandomAgent>();
+
+    //monte carlo
+    mc_enabled = true;
+    if(mc_enabled){
+        if(!mcAgent){
+            mcAgent = std::make_unique<MonteCarloAgent>(0.99, 0.2);
+            mcAgent->load("mc_policy.txt");
+            
+        }
+        lastProgress = 0.0;
+        noProgressFrames = 0;
+    }
     
     // ensure we have an Agent instance for this race
     if (agent == nullptr) {
@@ -35,6 +146,22 @@ void StateRace::init() {
     if (agent != nullptr) {
         agent->reset();
     }
+}
+
+//get player info
+PlayerInfo StateRace::getPlayerInfo(const DriverPtr& d){
+    PlayerInfo info;
+
+    info.progress = getProgress(*d);
+    info.speed = d->speedForward;
+    info.angle = d->posAngle;
+    info.lap = d->getLaps();
+    info.rank = d->rank;
+    info.onGround = (d->height == 0.0f);
+    info.canDrive = d->canDrive();
+
+    return info;
+
 }
 
 void StateRace::handleEvent(const sf::Event& event) {
@@ -75,6 +202,19 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         return true;
     }
 
+    //increase episode time as number of episodes increase
+    if (mc_enabled && mcAgent) {
+    int ep = mcAgent->getEpisodeCount();
+        if (ep < 200)
+            maxEpisodeTimeSecs = 15.0;
+        else if (ep < 500)
+            maxEpisodeTimeSecs = 30.0;
+        else if (ep < 1000)
+            maxEpisodeTimeSecs = 60.0;
+        else
+            maxEpisodeTimeSecs = 120.0;
+    }
+
     // update global time
     currentTime += deltaTime;
     pushedPauseThisFrame = false;
@@ -94,15 +234,35 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         driver->update(deltaTime);
         Audio::updateEngine(i, driver->position, driver->height,
                             driver->speedForward, driver->speedTurn);
+        
+        //get player info every frame for monte carlo                 
+        if(driver.get() == player.get()){
+            PlayerInfo info = getPlayerInfo(driver);
+
+            //test print
+            /*std::cout << "=== Player Info ===\n";
+            std::cout << "Position: (" << driver->position.x 
+                    << ", " << driver->position.y << ")\n";
+            std::cout << "Speed Forward: " << driver->speedForward << "\n";
+            std::cout << "Speed Turn: "    << driver->speedTurn << "\n";
+            std::cout << "Angle: "         << driver->posAngle << "\n";
+            std::cout << "Lap: "           << driver->getLaps() << "\n";
+            std::cout << "Gradient: "      << driver->getLastGradient() << "\n";
+            std::cout << "Rank: "          << driver->rank << "\n";
+            std::cout << "Height: "        << driver->height << "\n";
+            std::cout << "Can Drive: "     << driver->canDrive() << "\n";*/
+        }
                             
 
         //random agent
         //if random is enabled and if this driver is the player
-        if (random_enabled && driver == player) {
-            //update randomAI for this frame, get new random action
-            randomAI->update(deltaTime.asSeconds());
-            //get the random action
-            const auto& d = randomAI->action();
+        if (mc_enabled && mcAgent && driver == player) {
+            //make state ID
+            int stateId = makeStateId(driver);
+
+            //get action from monte carlo
+            int actionIdx = mcAgent->selectAction(stateId);
+            MCActions d = MonteCarloAgent::actionFromIndex(actionIdx);
 
     
         //if plauer os on the ground
@@ -113,12 +273,14 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                 float f = driver->vehicle->motorAcceleration * 0.5f;
                 driver->speedForward = std::min(driver->speedForward + f * deltaTime.asSeconds(), driver->vehicle->maxNormalLinearSpeed);
             }
+
+            //no braking for now
             //braking
-            if (d.brake) {
+            /*if (d.brake) {
                 //accelerate backwards 
                 float b = driver->vehicle->motorAcceleration * 0.6f;
                 driver->speedForward = std::max(driver->speedForward - b * deltaTime.asSeconds(), 0.0f);
-            }
+            }*/
         }
 
         //turning
@@ -136,9 +298,10 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
             driver->speedTurn /= 1.5f;
         }
 
+        //no jump or item for now
         //drift (jump)
         //if driver is able to drive and is on the ground
-        if (d.drift && driver->canDrive() && driver->height == 0.0f) {
+        /*if (d.drift && driver->canDrive() && driver->height == 0.0f) {
             driver->shortJump();
         }
 
@@ -146,8 +309,91 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         if (d.item && driver->canDrive() && driver->getPowerUp() != PowerUps::NONE) {
             //uses item to front (false would be backwards)
             Item::useItem(driver, positions, true);
+        }*/
+
+
+        //rewards
+        if (!rewardInit) {
+            // wait until gradient is valid before starting reward
+            if (driver->getLastGradient() >= 0) {
+                //initalize rewards
+                lastRewardProgress = getProgress(*driver);
+                rewardInit = true;
+            }
+        } 
+        //if rewards are initalized
+        else {
+            //init zero reward 
+            double reward = 0.0;
+
+            //get progression in track
+            double newProg   = getProgress(*driver);
+            //progress made since last frame
+            double progMade = newProg - lastRewardProgress;
+            //used for next step
+            lastRewardProgress = newProg;
+
+            //forward progress reward
+            reward += 5.0 * progMade;  
+
+            //if setback (out of bounds)
+            if (progMade < -15.0) {
+                //punish and endd episode
+                reward -= 200.0;
+                std::cout << "OUT OF BOUNDS!\n";
+                
+                //recordd last step
+                mcAgent->recordStep(stateId, actionIdx, reward);
+                mcAgent->endEpisode(false);
+                mcAgent->save("mc_policy.txt");
+
+                raceFinished = true;
+                game.popState();
+                return true;
+            }
+
+            //going backwards punishment
+            if (driver->speedForward < -0.5f) {
+                reward -= 3.0;
+            }
+
+            
+
+            //if agent is accelerating but making no progress (stuck)
+            if (d.accel && progMade <= 0.0) {
+                //increment frames with no progress by 1 (consecutive no progress)
+                noProgressFrames++;
+                
+                //if agent gets stuck for more than 6 secondds
+                if (noProgressFrames >= 360) {
+                    //punish and endd episodde
+                    reward -= 100.0;  
+                    std::cout<<"STUCK! PUNISHMENT!";  
+                    //reset no progress frames       
+                    noProgressFrames = 0; 
+
+                    //record last srep
+                    mcAgent->recordStep(stateId, actionIdx, reward);
+                    mcAgent->endEpisode(false);
+                    mcAgent->save("mc_policy.txt");
+
+                    raceFinished = true;
+                    game.popState();
+                    return true;
+                    }
+            }
+
+            //if no longer stuck
+            else{
+                //reset frames with no progress
+                noProgressFrames = 0;
+            }
+
+            //record values for state/action
+            mcAgent->recordStep(stateId, actionIdx, reward);
         }
 
+        //end of rewards
         //end of randdom agent
 }
         
@@ -167,7 +413,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
             }
 
             // Agent code (if you still need it)
-            if (agent != nullptr) {
+            /*if (agent != nullptr) {
                 std::cout << "=== AGENT STEP ===" << std::endl;
                 agent->updatePosition(driver->position.x, driver->position.y);
                 agent->updateSpeed(driver->speedForward, driver->speedTurn);
@@ -179,7 +425,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
                 
                 auto [obs, reward, terminated, truncated, info] = agent->step(0);
 
-            }
+            }*/
         }
     }
     
@@ -211,6 +457,7 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
     CollisionData data;
     for (const DriverPtr& driver : drivers) {
         if (CollisionHashMap::collide(driver, data)) {
+            collidedThisFrame = true;
             driver->collisionMomentum = data.momentum;
             driver->speedForward *= data.speedFactor;
             driver->speedTurn *= data.speedFactor;
@@ -274,6 +521,18 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         positions[positions.size() - 2]->getLaps() > NUM_LAPS_IN_CIRCUIT) {
         waitForPCTime = currentTime + WAIT_FOR_PC_LAST_PLACE;
     }
+
+    //monte carlo
+    //if episode time limit is reached
+    if (mc_enabled && mcAgent && currentTime.asSeconds() > maxEpisodeTimeSecs) {
+        std::cout << "END OF EPISODE!\n";
+        mcAgent->endEpisode(false);
+        mcAgent->save("mc_policy.txt");
+
+        raceFinished = true;
+        game.popState();
+        return true;
+    }   
     // end the race if player has finished or all other AI have finished and the
     // grace time has ended
     if ((player->getLaps() > NUM_LAPS_IN_CIRCUIT ||
@@ -304,6 +563,15 @@ bool StateRace::fixedUpdate(const sf::Time& deltaTime) {
         Lakitu::showFinish();
         Gui::endRace();
         player->controlType = DriverControlType::AI_GRADIENT;
+
+
+        //monte carlo
+        if(mc_enabled && mcAgent){
+            bool win = (player->getRank() <= 3);
+            mcAgent->endEpisode(win);
+            mcAgent->save("mc_policy.txt");
+        }
+
         game.popState();
     }
 
