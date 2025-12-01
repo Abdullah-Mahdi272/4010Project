@@ -1,0 +1,27 @@
+Group contributions: 
+Reflected on project proposal feedback and reconsidered research questions (comparing reinforcement learning algorithms in real time, fast paced environments where computation speed as well as action accuracy and learning speed matters.)
+For the requirement of being a novel change, we figured that adding a timed checkpoint and selected intervals would do this while also being instrumental in the training phase. This would help in terms of reinforcement, as the time split could 
+increase the density of rewards considerably, such -1 per step for speed, large lap bonuses, plus smaller ones for beating splits to reduce long-horizon issues. This would also decrease the amount time spent in training. As covered in class, for Dyna-Q frequent split rewards enhance the learned model's simulated experience for better policy improvement. 
+
+Discussed different applications of reinforcement learning algorithms such as the lack of ability to implement DP, UCB, etc.
+as we don't have a defined model to utilize for those algorithms. Explored possible uses of reinforcement learning algorithms such as
+MC, TD and dyna-Q+. 
+
+Current accomplishments: 
+Ran environment locally to begin coding - Everyone 
+Added position of agent into an agent class - Abdullah Mahdi
+
+Work in Progress: 
+Adding angle and speed of the agent. - Camilla Boateng
+Adding checkpoints to track agent progress without needing to wait for the game to end, could help the agent learn earlier - Shane Sibley-Felstead
+Adding distance to wall/ledge to provide the agent with information to prevent significant time losses. - Abdullah Mahdi
+
+Plans for the future: 
+    Reading week (before env demo on the 27th) 
+        Extract as much information that can be used for states to provide the agent with information useful for learning the game.
+        Create a random agent that takes random actions (This will later be changed so that the agent takes informed actions rather than random ones)
+        Prepare a usecase for the demo
+    
+    The week following the env demo:
+        Begin implementing agents, we will start off dividing into two groups, one to code a TD agent and another to code a MC agent.
+        
