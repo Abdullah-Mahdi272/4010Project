@@ -1,0 +1,20 @@
+Contributions:
+
+Shane worked on coding a python wrapper for the game that is able to run the agent on python while the game remains on cpp, Shane also wrote the code for an actor critic agent which was the implementation with the highest potential and will be the implementation that we will proceed with for our finished product. Shane also implemented a feature that allows training to be stopped and resumed at any time.
+
+Michael implemented a Monte Carlo agent built using the python wrapper previously mentioned. This will also be added in the final implementation as a weaker agent for comparison.
+
+Abdullah impleneted a TDQLearning agent in C++ seperate from Shane's implementation, this will be merged in the final product and it's peformance will directly be compared to the Monte Carlo agent. This has a different reward structure to the other agents.
+
+Camilla modified a DQN implementation that is also built on the python wrapper and it's results will directly be compared to the actor-critic's.
+
+We experimented with different rewards to find a reward structure that can help the agent not drive directly into walls and getting stuck in corners.
+
+These 2 implementations are currently on two seperate branches, abdullah-tdqlearning and python-rl-prototype. Files will be cherry picked from both branches and implemented into main as there is currently a bug in python-rl-prototype that is negatively affecting our agent's learning.
+Plans for the future:
+Fixing the bug causing npc's to drive backwards in python-rl-prototype by cherry picking only the agent related code to main.
+Writing the report.
+Removing any GUI that won't be beneficial.
+Implementing a version that doesn't render graphics and only focuses on training the agent. 
+
+
